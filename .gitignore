@@ -12,6 +12,7 @@ node_modules/
 
 # Astro (landing/)
 landing/dist/
+landing/.astro/
 landing/node_modules/
 landing/.env
 landing/.env.local

@@ -1,0 +1,6 @@
+[lint]
+ignore = [
+    "B008",   # FastAPI: Depends() em argumentos é o padrão do framework
+    "BLE001", # WebSocket manager: captura Exception é intencional para evitar queda de conexão
+    "F821",   # SQLAlchemy: forward references em strings são resolvidas em runtime pelo ORM
+]

@@ -3,9 +3,10 @@
 # =============================================================================
 
 resource "render_web_service" "backend" {
-  name   = "condocombat-backend"
-  plan   = "free"
-  region = "oregon"
+  name     = "condocombat-backend"
+  plan     = "free"
+  region   = "oregon"
+  owner_id = var.render_owner_id
 
   runtime_source = {
     image = {

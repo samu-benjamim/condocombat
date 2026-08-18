@@ -1,15 +1,6 @@
 # =============================================================================
 # Pipeline de CD — Terraform (IaC)
 # =============================================================================
-# Roda DEPOIS que os três CIs passam no main:
-#   - Backend CI   (backend/**)
-#   - Frontend CI  (frontend/**)
-#   - Landing CI   (landing/** via deploy-landing.yml job ci)
-#
-# O pipeline provisiona toda a infraestrutura com Terraform:
-#   Supabase (DB) · Render (backend + frontend) · Netlify (landing)
-# =============================================================================
-
 name: CD — Terraform
 
 on:
@@ -29,8 +20,6 @@ jobs:
     name: Terraform Init · Plan · Apply
     runs-on: ubuntu-latest
 
-    # Só executa se o workflow que disparou o evento teve sucesso
-    # (ou se foi chamado manualmente via workflow_dispatch)
     if: >
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.conclusion == 'success'
@@ -40,7 +29,6 @@ jobs:
         working-directory: ./terraform
 
     env:
-      # Mapeia secrets do repositório para variáveis do Terraform
       TF_VAR_supabase_access_token:  ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       TF_VAR_supabase_org_id:        ${{ secrets.SUPABASE_ORG_ID }}
       TF_VAR_supabase_db_password:   ${{ secrets.SUPABASE_DB_PASSWORD }}
@@ -55,7 +43,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Baixa o artefato de build da landing page gerado pelo CI
       - name: Download landing build artifact
         uses: dawidd6/action-download-artifact@v6
         with:
@@ -69,6 +56,13 @@ jobs:
         with:
           terraform_version: "1.10.0"
 
+      - name: Restore Terraform state
+        uses: actions/cache@v4
+        with:
+          path: terraform/terraform.tfstate
+          key: terraform-state-${{ github.ref_name }}
+          restore-keys: terraform-state-
+
       - name: Terraform Init
         run: terraform init
 
@@ -80,6 +74,14 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
+
+      - name: Save Terraform state
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state
+          path: terraform/terraform.tfstate
+          retention-days: 30
 
       - name: Show Outputs
         run: terraform output

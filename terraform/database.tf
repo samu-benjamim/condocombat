@@ -2,6 +2,14 @@
 # Banco de Dados — Supabase PostgreSQL
 # =============================================================================
 
+# Importa o projeto existente no Supabase para o state do Terraform.
+# O projeto foi criado no primeiro apply; o import block garante que runs
+# subsequentes reconheçam o recurso sem tentar recriar.
+import {
+  to = supabase_project.condocombat
+  id = "zzapgfhxkszxrwwqivwp"
+}
+
 resource "supabase_project" "condocombat" {
   organization_id   = var.supabase_org_id
   name              = "condocombat"

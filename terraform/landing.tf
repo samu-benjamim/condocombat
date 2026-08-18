@@ -17,7 +17,7 @@ resource "null_resource" "deploy_landing" {
     command = <<-EOT
       npm install -g netlify-cli --silent
       netlify deploy \
-        --dir=landing/dist \
+        --dir="${path.root}/../landing/dist" \
         --prod \
         --auth="${var.netlify_auth_token}" \
         --site="${var.netlify_site_name}"

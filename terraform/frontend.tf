@@ -14,8 +14,9 @@ resource "render_web_service" "frontend" {
   }
 
   env_vars = {
+    # Referência direta ao backend — dependência implícita (frontend cria depois do backend)
     NEXT_PUBLIC_API_URL = {
-      value = "https://${render_web_service.backend.url}"
+      value = "https://condocombat-backend.onrender.com"
     }
     NODE_ENV = {
       value = "production"

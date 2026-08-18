@@ -20,8 +20,10 @@ resource "render_web_service" "backend" {
     DATABASE_URL = {
       value = local.database_url
     }
+    # URL previsível do Render: {nome-do-serviço}.onrender.com
+    # Usar referência direta criaria ciclo (backend↔frontend), então usamos o padrão fixo.
     CORS_ORIGINS = {
-      value = "https://${render_web_service.frontend.url}"
+      value = "https://condocombat-frontend.onrender.com"
     }
   }
 

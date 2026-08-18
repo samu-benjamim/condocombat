@@ -24,8 +24,3 @@ output "supabase_project_id" {
   value       = supabase_project.condocombat.id
 }
 
-output "supabase_anon_key" {
-  description = "Chave anônima pública do Supabase"
-  value       = supabase_project.condocombat.anon_key
-  sensitive   = true
-}

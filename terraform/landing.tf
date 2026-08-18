@@ -1,18 +1,12 @@
 # =============================================================================
-# Landing Page — Netlify
+# Landing Page — Netlify (deploy via CLI gerenciado pelo Terraform)
 # =============================================================================
-# O provider netlify/netlify expõe "netlify_site" apenas como DATA SOURCE
-# (consulta de site existente), não como resource de criação.
-# O site já existe na conta Netlify — consultamos o ID e fazemos o deploy
-# via Netlify CLI dentro de um null_resource (local-exec).
+# O provider netlify/netlify não possui resource para criar/gerenciar sites
+# e o data source exige team_slug (não disponível aqui).
+# O deploy é feito via null_resource + local-exec: o CLI do Netlify aceita
+# o slug do site diretamente no flag --site, sem precisar do ID interno.
 # =============================================================================
 
-# Lê o site existente para obter o ID interno do Netlify
-data "netlify_site" "landing" {
-  name = var.netlify_site_name
-}
-
-# Faz o deploy dos arquivos estáticos de landing/dist
 resource "null_resource" "deploy_landing" {
   triggers = {
     # Força redeploy a cada terraform apply no CD
@@ -26,7 +20,7 @@ resource "null_resource" "deploy_landing" {
         --dir=landing/dist \
         --prod \
         --auth="${var.netlify_auth_token}" \
-        --site="${data.netlify_site.landing.id}"
+        --site="${var.netlify_site_name}"
     EOT
   }
 }

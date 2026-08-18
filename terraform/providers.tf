@@ -14,10 +14,6 @@ terraform {
       source  = "render-oss/render"
       version = "~> 1.6"
     }
-    netlify = {
-      source  = "netlify/netlify"
-      version = "~> 0.1"
-    }
     null = {
       source  = "hashicorp/null"
       version = "~> 3.0"
@@ -34,6 +30,3 @@ provider "render" {
   owner_id = var.render_owner_id
 }
 
-provider "netlify" {
-  token = var.netlify_auth_token
-}

@@ -1,0 +1,85 @@
+# =============================================================================
+# Pipeline de CD — Terraform (IaC)
+# =============================================================================
+# Roda DEPOIS que os três CIs passam no main:
+#   - Backend CI   (backend/**)
+#   - Frontend CI  (frontend/**)
+#   - Landing CI   (landing/** via deploy-landing.yml job ci)
+#
+# O pipeline provisiona toda a infraestrutura com Terraform:
+#   Supabase (DB) · Render (backend + frontend) · Netlify (landing)
+# =============================================================================
+
+name: CD — Terraform
+
+on:
+  workflow_run:
+    workflows:
+      - "Backend CI"
+      - "Frontend CI"
+      - "Deploy Landing Page"
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  terraform:
+    name: Terraform Init · Plan · Apply
+    runs-on: ubuntu-latest
+
+    # Só executa se o workflow que disparou o evento teve sucesso
+    # (ou se foi chamado manualmente via workflow_dispatch)
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    env:
+      # Mapeia secrets do repositório para variáveis do Terraform
+      TF_VAR_supabase_access_token:  ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      TF_VAR_supabase_org_id:        ${{ secrets.SUPABASE_ORG_ID }}
+      TF_VAR_supabase_db_password:   ${{ secrets.SUPABASE_DB_PASSWORD }}
+      TF_VAR_render_api_key:         ${{ secrets.RENDER_API_KEY }}
+      TF_VAR_render_owner_id:        ${{ secrets.RENDER_OWNER_ID }}
+      TF_VAR_netlify_auth_token:     ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      TF_VAR_netlify_site_name:      ${{ secrets.NETLIFY_SITE_NAME }}
+      TF_VAR_dockerhub_username:     ${{ secrets.DOCKERHUB_USERNAME }}
+      TF_VAR_backend_secret_key:     ${{ secrets.BACKEND_SECRET_KEY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Baixa o artefato de build da landing page gerado pelo CI
+      - name: Download landing build artifact
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: deploy-landing.yml
+          name: landing-dist
+          path: landing/dist/
+          if_no_artifact_found: warn
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.10.0"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+
+      - name: Show Outputs
+        run: terraform output
